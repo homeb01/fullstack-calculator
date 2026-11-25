@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"math"
@@ -10,6 +12,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"testing/iotest"
+
+	"fullstack-calculator/backend/internal/calculator"
 )
 
 func discardLogger() *slog.Logger {
@@ -138,6 +143,12 @@ func TestCalculate(t *testing.T) {
 			wantBody:   `{"error":{"code":"INVALID_REQUEST","message":"request body must not exceed 4096 bytes"}}`,
 		},
 		{
+			name:       "body too large after a valid object",
+			body:       `{"operation":"add","a":1,"b":2}` + strings.Repeat(" ", maxBodyBytes),
+			wantStatus: http.StatusBadRequest,
+			wantBody:   `{"error":{"code":"INVALID_REQUEST","message":"request body must not exceed 4096 bytes"}}`,
+		},
+		{
 			name:       "unknown operation",
 			body:       `{"operation":"modulo","a":1,"b":2}`,
 			wantStatus: http.StatusBadRequest,
@@ -257,6 +268,69 @@ func TestWrongMethodUsesDefaultMuxResponse(t *testing.T) {
 	if allow := rec.Header().Get("Allow"); allow != http.MethodPost {
 		t.Errorf("Allow = %q, want %q", allow, http.MethodPost)
 	}
+}
+
+func TestUnreadableBodyIsInvalidRequest(t *testing.T) {
+	body := io.MultiReader(strings.NewReader(`{"operation":"add",`), iotest.ErrReader(errors.New("connection reset")))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/calculate", body)
+	rec := httptest.NewRecorder()
+
+	NewHandler(discardLogger()).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+	assertJSONResponse(t, rec, `{"error":{"code":"INVALID_REQUEST","message":"request body is not valid JSON"}}`)
+}
+
+func TestWriteErrorMapping(t *testing.T) {
+	tests := []struct {
+		name       string
+		err        error
+		wantStatus int
+		wantBody   string
+	}{
+		{
+			name:       "wrapped calculator error keeps its code",
+			err:        fmt.Errorf("%w: extra context", calculator.ErrOutOfRange),
+			wantStatus: http.StatusUnprocessableEntity,
+			wantBody:   `{"error":{"code":"RESULT_OUT_OF_RANGE","message":"result out of range: extra context"}}`,
+		},
+		{
+			name:       "unknown error becomes an internal error without leaking details",
+			err:        errors.New("database password is hunter2"),
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   `{"error":{"code":"INTERNAL_ERROR","message":"internal server error"}}`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &server{logger: discardLogger()}
+			rec := httptest.NewRecorder()
+
+			s.writeError(rec, tc.err)
+
+			if rec.Code != tc.wantStatus {
+				t.Errorf("status = %d, want %d", rec.Code, tc.wantStatus)
+			}
+			assertJSONResponse(t, rec, tc.wantBody)
+		})
+	}
+}
+
+func TestRecoverPanicsRepanicsAbortHandler(t *testing.T) {
+	s := &server{logger: discardLogger()}
+	handler := s.recoverPanics(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		panic(http.ErrAbortHandler)
+	}))
+
+	defer func() {
+		if rec := recover(); rec != http.ErrAbortHandler {
+			t.Fatalf("recovered %v, want http.ErrAbortHandler to propagate", rec)
+		}
+	}()
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/health", nil))
 }
 
 func TestRecoverPanics(t *testing.T) {

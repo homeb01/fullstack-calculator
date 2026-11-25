@@ -7,14 +7,14 @@ fullstack-calculator/backend/internal/api/handler.go:67:		NewHandler		100.0%
 fullstack-calculator/backend/internal/api/handler.go:75:		handleCalculate		100.0%
 fullstack-calculator/backend/internal/api/handler.go:108:		normalizeZero		100.0%
 fullstack-calculator/backend/internal/api/handler.go:115:		handleHealth		100.0%
-fullstack-calculator/backend/internal/api/handler.go:119:		decodeRequest		91.7%
-fullstack-calculator/backend/internal/api/handler.go:138:		decodeError		91.7%
+fullstack-calculator/backend/internal/api/handler.go:119:		decodeRequest		100.0%
+fullstack-calculator/backend/internal/api/handler.go:138:		decodeError		100.0%
 fullstack-calculator/backend/internal/api/handler.go:164:		validate		100.0%
-fullstack-calculator/backend/internal/api/handler.go:184:		writeError		80.0%
+fullstack-calculator/backend/internal/api/handler.go:184:		writeError		100.0%
 fullstack-calculator/backend/internal/api/handler.go:202:		writeInternalError	100.0%
 fullstack-calculator/backend/internal/api/handler.go:206:		newErrorResponse	100.0%
 fullstack-calculator/backend/internal/api/handler.go:210:		writeJSON		88.9%
-fullstack-calculator/backend/internal/api/handler.go:224:		recoverPanics		90.0%
+fullstack-calculator/backend/internal/api/handler.go:224:		recoverPanics		100.0%
 fullstack-calculator/backend/internal/calculator/calculator.go:31:	RequiresB		100.0%
 fullstack-calculator/backend/internal/calculator/calculator.go:40:	Calculate		100.0%
 fullstack-calculator/backend/internal/calculator/calculator.go:63:	isFinite		100.0%
@@ -25,4 +25,4 @@ fullstack-calculator/backend/internal/calculator/calculator.go:79:	divide			100.
 fullstack-calculator/backend/internal/calculator/calculator.go:88:	power			100.0%
 fullstack-calculator/backend/internal/calculator/calculator.go:98:	sqrt			100.0%
 fullstack-calculator/backend/internal/calculator/calculator.go:106:	percentage		100.0%
-total:									(statements)		75.8%
+total:									(statements)		78.9%

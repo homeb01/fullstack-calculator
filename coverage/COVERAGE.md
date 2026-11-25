@@ -2,10 +2,10 @@
 
 | Area | File | Total |
 |---|---|---|
-| Backend (Go) | [backend.txt](backend.txt) | 75.8% of statements |
+| Backend (Go) | [backend.txt](backend.txt) | 78.9% of statements |
 | Frontend (Vitest, v8) | [frontend.txt](frontend.txt) | 95.45% of statements, 93.04% of branches |
 
-The backend total includes `cmd/server` (startup and shutdown), which has no unit tests. `internal/calculator` is at 100% and `internal/api` at 92.7%.
+The backend total includes `cmd/server` (startup and shutdown), which has no unit tests. `internal/calculator` is at 100% and `internal/api` at 97.9%; its only untested code logs a failed response write and implements the `error` interface.
 
 ## Regenerate
 
